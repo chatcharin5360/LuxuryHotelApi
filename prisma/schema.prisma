@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+model User {
+  User_id    Int    @id @default(autoincrement())
+  FirstName  String
+  LastName   String
+  Email      String  @unique
+  Phone      String?
+  Role       Role    @default(USER)
+  Booking    Booking[]
+}
+
+model Booking {
+  Booking_id    Int    @id @default(autoincrement())
+  Check_in_date DateTime @default(now()) 
+  Check_out_date DateTime @default(now()) 
+  Total_price   Float
+  Booking_status BookingStatus @default(PENDING)
+  User_id       Int
+  User          User @relation(fields: [User_id], references: [User_id])
+  Payment       Payment?
+}
+
+model Payment {
+  Payment_id    Int @id @default(autoincrement())
+  Booking_id    Int @unique
+  Amount        Float
+  Payment_method String
+  Payment_status String
+  Payment_date  DateTime @default(now())
+  Booking       Booking @relation(fields: [Booking_id], references: [Booking_id])
+}
+
