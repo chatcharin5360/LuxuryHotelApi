@@ -9,7 +9,7 @@ const verifyToken = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.get("/profile", verifyToken, getProfile);
-router.put("/profile", verifyToken, updateProfile);
+router.patch("/profile", verifyToken, updateProfile);
 router.delete("/delete", verifyToken, deleteAccount);
 
 module.exports = router;

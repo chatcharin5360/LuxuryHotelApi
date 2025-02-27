@@ -29,6 +29,7 @@ model User {
   FirstName  String
   LastName   String
   Email      String  @unique
+  Password   String  
   Phone      String?
   Role       Role    @default(USER)
   Booking    Booking[]
