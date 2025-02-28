@@ -1,58 +1,78 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "mysql" // หรือเปลี่ยนเป็น "postgresql" ตามฐานข้อมูลที่ใช้
   url      = env("DATABASE_URL")
 }
 
 enum Role {
-  ADMIN
   USER
+  ADMIN
 }
 
 enum BookingStatus {
   PENDING
   CONFIRMED
-  CANCELLED
+  CANCELED
+  COMPLETED
 }
 
 model User {
-  User_id    Int    @id @default(autoincrement())
-  FirstName  String
-  LastName   String
-  Email      String  @unique
-  Password   String  
-  Phone      String?
-  Role       Role    @default(USER)
-  Booking    Booking[]
+  User_id   Int    @id @default(autoincrement())
+  cleck_id  String @unique
+  FirstName String
+  LastName  String
+  Email     String @unique
+  Phone     String?
+  Password  String?
+  Role      Role?   @default(USER)
+
+  bookings  Booking[]
 }
 
 model Booking {
-  Booking_id    Int    @id @default(autoincrement())
-  Check_in_date DateTime @default(now()) 
-  Check_out_date DateTime @default(now()) 
+  Booking_id    Int           @id @default(autoincrement())
+  User_id       Int
+  Check_in_date DateTime
+  Check_out_date DateTime
   Total_price   Float
   Booking_status BookingStatus @default(PENDING)
-  User_id       Int
-  User          User @relation(fields: [User_id], references: [User_id])
-  Payment       Payment?
+  user         User   @relation(fields: [User_id], references: [User_id], onDelete: Cascade)
+
+  bookingRooms BookingOnRoom[]
+  payment      Payment?
+}
+
+model BookingOnRoom {
+  BookingOnRoom_id Int @id @default(autoincrement())
+  Booking_id       Int
+  Room_id          Int
+  Quantity_room    Int
+
+  booking Booking @relation(fields: [Booking_id], references: [Booking_id], onDelete: Cascade)
+  room    Room    @relation(fields: [Room_id], references: [Room_id], onDelete: Cascade)
+}
+
+model Room {
+  Room_id     Int     @id @default(autoincrement())
+  Hotel_id    Int
+  Room_type   String
+  Picture_id  String?
+  Description String?
+  Price_per_night Float
+
+  bookingRooms BookingOnRoom[]
 }
 
 model Payment {
-  Payment_id    Int @id @default(autoincrement())
-  Booking_id    Int @unique
-  Amount        Float
-  Payment_method String
-  Payment_status String
-  Payment_date  DateTime @default(now())
-  Booking       Booking @relation(fields: [Booking_id], references: [Booking_id])
-}
+  Payment_id      Int     @id @default(autoincrement())
+  Booking_id      Int     @unique
+  Amount          Float
+  Payment_method  String
+  Payment_status  String
+  Payment_date    DateTime
 
+  booking Booking @relation(fields: [Booking_id], references: [Booking_id], onDelete: Cascade)
+}
