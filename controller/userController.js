@@ -1,62 +1,53 @@
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-
 const createError = require("../utils/createError");
 
-// ✅ เพิ่ม API สำหรับดึงข้อมูลโปรไฟล์ของผู้ใช้
-exports.getProfile = async (req, res, next) => {
+const prisma = new PrismaClient();
+
+// ✅ ดึงข้อมูลผู้ใช้จาก MySQL และ Clerk
+exports.getUserProfile = async (req, res, next) => {
   try {
-    const { id } = req.user; // Clerk ID
+    const { userId } = req.auth; // รับข้อมูลจาก Clerk Middleware
 
-    const user = await prisma.user.findUnique({
-      where: { cleck_id: id },
-      select: { FirstName: true, LastName: true, Email: true, Phone: true },
-    });
+    const user = await prisma.user.findUnique({ where: { clerk_id: userId } });
+    if (!user) return next(createError(404, "User not found"));
 
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    res.status(200).json(user);
+    res.json(user);
   } catch (error) {
-    next(error);
+    next(createError(500, "Failed to fetch user profile"));
   }
 };
 
-exports.updateProfile = async (req, res, next) => {
+// ✅ อัปเดตข้อมูลผู้ใช้
+exports.updateUserProfile = async (req, res, next) => {
   try {
-    const { id } = req.user; // Clerk ID
-    const { FirstName, LastName, Email, Phone } = req.body;
+    const { userId } = req.auth;
+    const { FirstName, LastName } = req.body;
 
-    const updatedUser = await prisma.user.upsert({
-      where: { cleck_id: id },
-      create: { cleck_id: id, FirstName, LastName, Email, Phone },
-      update: { FirstName, LastName, Email, Phone },
+    const updatedUser = await prisma.user.update({
+      where: { clerk_id: userId },
+      data: { FirstName, LastName },
     });
 
-    console.log("Updated User:", updatedUser);
-    res.status(200).json({ message: "success", user: updatedUser });
+    res.json({ message: "User updated successfully", user: updatedUser });
   } catch (error) {
-    next(error);
+    next(createError(500, "Failed to update user profile"));
   }
 };
 
+// ✅ ลบผู้ใช้ (เฉพาะ Admin)
 exports.deleteUser = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const { id } = req.params;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { User_id: Number(userId) },
+    const user = await prisma.user.findUnique({
+      where: { User_id: Number(id) },
     });
+    if (!user) return next(createError(404, "User not found"));
 
-    if (!existingUser) {
-      return next(createError(404, "User not found"));
-    }
+    await prisma.user.delete({ where: { User_id: Number(id) } });
 
-    await prisma.user.delete({
-      where: { User_id: Number(userId) },
-    });
-
-    res.status(200).json({ message: "User deleted successfully" });
+    res.json({ message: "User deleted successfully" });
   } catch (error) {
-    next(error);
+    next(createError(500, "Failed to delete user"));
   }
 };

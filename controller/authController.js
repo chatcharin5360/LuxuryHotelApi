@@ -1,49 +1,44 @@
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const createError = require("../utils/createError");
-const { registerSchema, loginSchema } = require("../middleware/authValidation");
-
 const prisma = new PrismaClient();
 
-exports.register = async (req, res, next) => {
+exports.clerkWebhook = async (req, res, next) => {
   try {
-    const { FirstName, LastName, Email, Password } = registerSchema.parse(
-      req.body
-    );
+    console.log("🔔 Webhook received:", JSON.stringify(req.body, null, 2));
 
-    const existingUser = await prisma.user.findUnique({ where: { Email } });
-    if (existingUser) return next(createError(400, "Email already exists"));
+    if (!req.body.data) {
+      return res.status(400).json({ message: "Invalid Clerk data" });
+    }
 
-    const hashedPassword = await bcrypt.hash(Password, 10);
-    const newUser = await prisma.user.create({
-      data: { FirstName, LastName, Email, Password: hashedPassword },
+    const { id, first_name, last_name, email_addresses } = req.body.data;
+
+    if (!id || !email_addresses || email_addresses.length === 0) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // 🔥 ใช้ `upsert()` แทน `create()` เพื่อป้องกัน Duplicate Email
+    const newUser = await prisma.user.upsert({
+      where: { Email: email_addresses[0].email_address },
+      update: {
+        clerk_id: id,
+        FirstName: first_name || "Unknown",
+        LastName: last_name || "User",
+      },
+      create: {
+        clerk_id: id,
+        FirstName: first_name || "Unknown",
+        LastName: last_name || "User",
+        Email: email_addresses[0]?.email_address || "",
+      },
     });
 
-    res.status(201).json({ message: "User registered successfully" });
+    console.log("✅ User registered/updated successfully:", newUser);
+    res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
   } catch (error) {
-    next(error);
-  }
-};
-
-exports.login = async (req, res, next) => {
-  try {
-    const { Email, Password } = loginSchema.parse(req.body);
-
-    const user = await prisma.user.findUnique({ where: { Email } });
-    if (!user) return next(createError(404, "User not found"));
-
-    const isMatch = await bcrypt.compare(Password, user.Password);
-    if (!isMatch) return next(createError(400, "Invalid credentials"));
-
-    const token = jwt.sign(
-      { id: user.User_id, role: user.Role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    res.json({ token });
-  } catch (error) {
-    next(error);
+    console.error("❌ Error processing webhook:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };

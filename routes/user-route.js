@@ -1,17 +1,19 @@
 const express = require("express");
 const {
-  getProfile,
-  updateProfile,
+  getUserProfile,
+  updateUserProfile,
   deleteUser,
 } = require("../controller/userController");
-const verifyToken = require("../middleware/authMiddleware");
-const verifyAdmin = require("../middleware/adminMiddleware");
+const { clerkMiddleware } = require("@clerk/express");
+const { checkAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.get("/profile", verifyToken, getProfile);
-router.post("/profile", verifyToken,updateProfile);
-router.delete("/:userId", verifyToken, verifyAdmin, deleteUser);
+// ✅ ใช้ `clerkMiddleware` สำหรับ Clerk Authentication
+router.get("/profile", clerkMiddleware, getUserProfile);
+router.post("/profile", clerkMiddleware, updateUserProfile);
 
+// ✅ เส้นทาง DELETE ใช้ `checkAdmin` เพื่อตรวจสอบสิทธิ์ Admin
+router.delete("/delete/:id", clerkMiddleware, checkAdmin, deleteUser);
 
 module.exports = router;

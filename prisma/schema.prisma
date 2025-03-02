@@ -3,76 +3,68 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql" // หรือเปลี่ยนเป็น "postgresql" ตามฐานข้อมูลที่ใช้
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
+model booking {
+  Booking_id     Int                    @id @default(autoincrement())
+  Check_in_date  DateTime
+  Check_out_date DateTime
+  Total_price    Float
+  Booking_status booking_Booking_status @default(PENDING)
+  User_id        Int
+
+  @@index([User_id], map: "Booking_User_id_fkey")
 }
 
-enum BookingStatus {
+model bookingonroom {
+  BookingOnRoom_id Int @id @default(autoincrement())
+  Booking_id       Int
+  Room_id          Int
+  Quantity_room    Int
+
+  @@index([Booking_id], map: "BookingOnRoom_Booking_id_fkey")
+  @@index([Room_id], map: "BookingOnRoom_Room_id_fkey")
+}
+
+model payment {
+  Payment_id     Int      @id @default(autoincrement())
+  Booking_id     Int      @unique(map: "Payment_Booking_id_key")
+  Amount         Float
+  Payment_method String
+  Payment_status String
+  Payment_date   DateTime
+}
+
+model room {
+  Room_id         Int     @id @default(autoincrement())
+  Hotel_id        Int
+  Room_type       String
+  Picture_id      String?
+  Description     String?
+  Price_per_night Float
+}
+
+model user {
+  User_id   Int        @id @default(autoincrement())
+  FirstName String
+  LastName  String
+  Email     String     @unique(map: "User_Email_key")
+  Phone     String?
+  Role      user_Role? @default(USER)
+  Password  String?
+  clerk_id  String     @unique(map: "User_clerk_id_key")
+}
+
+enum booking_Booking_status {
   PENDING
   CONFIRMED
   CANCELED
   COMPLETED
 }
 
-model User {
-  User_id   Int    @id @default(autoincrement())
-  cleck_id  String @unique
-  FirstName String
-  LastName  String
-  Email     String @unique
-  Phone     String?
-  Password  String?
-  Role      Role?   @default(USER)
-
-  bookings  Booking[]
-}
-
-model Booking {
-  Booking_id    Int           @id @default(autoincrement())
-  User_id       Int
-  Check_in_date DateTime
-  Check_out_date DateTime
-  Total_price   Float
-  Booking_status BookingStatus @default(PENDING)
-  user         User   @relation(fields: [User_id], references: [User_id], onDelete: Cascade)
-
-  bookingRooms BookingOnRoom[]
-  payment      Payment?
-}
-
-model BookingOnRoom {
-  BookingOnRoom_id Int @id @default(autoincrement())
-  Booking_id       Int
-  Room_id          Int
-  Quantity_room    Int
-
-  booking Booking @relation(fields: [Booking_id], references: [Booking_id], onDelete: Cascade)
-  room    Room    @relation(fields: [Room_id], references: [Room_id], onDelete: Cascade)
-}
-
-model Room {
-  Room_id     Int     @id @default(autoincrement())
-  Hotel_id    Int
-  Room_type   String
-  Picture_id  String?
-  Description String?
-  Price_per_night Float
-
-  bookingRooms BookingOnRoom[]
-}
-
-model Payment {
-  Payment_id      Int     @id @default(autoincrement())
-  Booking_id      Int     @unique
-  Amount          Float
-  Payment_method  String
-  Payment_status  String
-  Payment_date    DateTime
-
-  booking Booking @relation(fields: [Booking_id], references: [Booking_id], onDelete: Cascade)
+enum user_Role {
+  USER
+  ADMIN
 }
