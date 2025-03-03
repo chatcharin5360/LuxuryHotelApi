@@ -1,53 +1,68 @@
 const { PrismaClient } = require("@prisma/client");
 const createError = require("../utils/createError");
+const { updateUserSchema } = require("../middleware/userValidation");
 
 const prisma = new PrismaClient();
 
-// ✅ ดึงข้อมูลผู้ใช้จาก MySQL และ Clerk
-exports.getUserProfile = async (req, res, next) => {
+exports.getProfile = async (req, res) => {
   try {
-    const { userId } = req.auth; // รับข้อมูลจาก Clerk Middleware
+    console.log("🔍 Fetching Profile for User ID:", req.user?.id); // ✅ Debug User ID
 
-    const user = await prisma.user.findUnique({ where: { clerk_id: userId } });
-    if (!user) return next(createError(404, "User not found"));
-
-    res.json(user);
-  } catch (error) {
-    next(createError(500, "Failed to fetch user profile"));
-  }
-};
-
-// ✅ อัปเดตข้อมูลผู้ใช้
-exports.updateUserProfile = async (req, res, next) => {
-  try {
-    const { userId } = req.auth;
-    const { FirstName, LastName } = req.body;
-
-    const updatedUser = await prisma.user.update({
-      where: { clerk_id: userId },
-      data: { FirstName, LastName },
+    // ใช้ User_id แทน id
+    const user = await prisma.user.findUnique({
+      where: {
+        User_id: req.user.id, // ใช้ User_id แทน id
+      },
+      select: {
+        User_id: true,
+        FirstName: true,
+        LastName: true,
+        Email: true,
+      },
     });
 
-    res.json({ message: "User updated successfully", user: updatedUser });
+    if (!user) {
+      console.log("❌ User Not Found");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    console.log("✅ User Profile Found:", user);
+    res.json(user);
   } catch (error) {
-    next(createError(500, "Failed to update user profile"));
+    console.error("❌ Error fetching user profile:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
-// ✅ ลบผู้ใช้ (เฉพาะ Admin)
-exports.deleteUser = async (req, res, next) => {
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { FirstName, LastName, Phone } = updateUserSchema.parse(req.body);
+
+    const updatedUser = await prisma.user.update({
+      where: { User_id: req.user.id },
+      data: { FirstName, LastName, Phone },
+    });
+
+    res.json(updatedUser);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deleteAccount = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const user = await prisma.user.findUnique({
+    const userToDelete = await prisma.user.findUnique({
       where: { User_id: Number(id) },
     });
-    if (!user) return next(createError(404, "User not found"));
+
+    if (!userToDelete) return next(createError(404, "User not found"));
 
     await prisma.user.delete({ where: { User_id: Number(id) } });
 
     res.json({ message: "User deleted successfully" });
   } catch (error) {
-    next(createError(500, "Failed to delete user"));
+    next(error);
   }
 };

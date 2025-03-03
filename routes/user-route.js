@@ -1,19 +1,21 @@
 const express = require("express");
 const {
-  getUserProfile,
-  updateUserProfile,
-  deleteUser,
+  getProfile,
+  updateProfile,
+  deleteAccount,
 } = require("../controller/userController");
-const { clerkMiddleware } = require("@clerk/express");
-const { checkAdmin } = require("../middleware/authMiddleware");
+const verifyToken = require("../middleware/authMiddleware");
+const isAdmin = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-// ✅ ใช้ `clerkMiddleware` สำหรับ Clerk Authentication
-router.get("/profile", clerkMiddleware, getUserProfile);
-router.post("/profile", clerkMiddleware, updateUserProfile);
+// API สำหรับดึงข้อมูลผู้ใช้
+router.get("/profile", verifyToken, getProfile); // ใช้ /profile ในการดึงข้อมูล
 
-// ✅ เส้นทาง DELETE ใช้ `checkAdmin` เพื่อตรวจสอบสิทธิ์ Admin
-router.delete("/delete/:id", clerkMiddleware, checkAdmin, deleteUser);
+// API สำหรับอัปเดตข้อมูลผู้ใช้
+router.post("/update", verifyToken, updateProfile); // ใช้ /update ในการอัปเดตข้อมูล
+
+// API สำหรับลบข้อมูลผู้ใช้ (เฉพาะ Admin)
+router.delete("/delete", verifyToken, isAdmin, deleteAccount); // ใช้ /delete ในการลบข้อมูล
 
 module.exports = router;

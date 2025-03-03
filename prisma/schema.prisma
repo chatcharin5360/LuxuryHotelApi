@@ -53,8 +53,9 @@ model user {
   Email     String     @unique(map: "User_Email_key")
   Phone     String?
   Role      user_Role? @default(USER)
-  Password  String?
-  clerk_id  String     @unique(map: "User_clerk_id_key")
+  Password  String     // ✅ ใช้ bcrypt hash password
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 enum booking_Booking_status {

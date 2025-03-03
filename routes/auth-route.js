@@ -1,9 +1,9 @@
 const express = require("express");
-const { clerkWebhook } = require("../controller/authController");
+const { register, login } = require("../controller/authController");
 
 const router = express.Router();
 
-// ✅ Webhook Route จาก Clerk
-router.post("/clerk-webhook", express.json(), clerkWebhook);
+router.post("/register", register);
+router.post("/login", login);
 
 module.exports = router;
