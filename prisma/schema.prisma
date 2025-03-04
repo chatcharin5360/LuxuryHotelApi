@@ -39,7 +39,6 @@ model payment {
 
 model room {
   Room_id         Int     @id @default(autoincrement())
-  Hotel_id        Int
   Room_type       String
   Picture_id      String?
   Description     String?
@@ -53,7 +52,7 @@ model user {
   Email     String     @unique(map: "User_Email_key")
   Phone     String?
   Role      user_Role? @default(USER)
-  Password  String     // ✅ ใช้ bcrypt hash password
+  Password  String     
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }

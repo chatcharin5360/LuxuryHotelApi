@@ -18,6 +18,7 @@ exports.getProfile = async (req, res) => {
         FirstName: true,
         LastName: true,
         Email: true,
+        Role: true,
       },
     });
 

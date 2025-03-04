@@ -7,6 +7,7 @@ const handleErrors = require("./middleware/error");
 const authRouter = require("./routes/auth-route");
 const userRouter = require("./routes/user-route");
 const adminRouter = require("./routes/admin-route");
+const roomRoute = require('./routes/room-route');
 const app = express();
 
 // Middlewares
@@ -18,6 +19,7 @@ app.use(express.json()); // For reading JSON
 app.use("/api", authRouter); // สำหรับการเข้าสู่ระบบ
 app.use("/api/user", userRouter); // ใช้ /api/user สำหรับ userRouter
 app.use("/api/admin", adminRouter); // เพิ่ม Routing สำหรับ admin
+app.use('/api', roomRoute);
 
 // Handle errors
 app.use(handleErrors);
