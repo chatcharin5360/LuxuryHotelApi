@@ -4,14 +4,11 @@ const { updateUserSchema } = require("../middleware/userValidation");
 
 const prisma = new PrismaClient();
 
-exports.getProfile = async (req, res) => {
+exports.getProfile = async (req, res, next) => {
   try {
-    console.log("🔍 Fetching Profile for User ID:", req.user?.id); // ✅ Debug User ID
-
-    // ใช้ User_id แทน id
     const user = await prisma.user.findUnique({
       where: {
-        User_id: req.user.id, // ใช้ User_id แทน id
+        User_id: req.user.id,
       },
       select: {
         User_id: true,
@@ -31,21 +28,22 @@ exports.getProfile = async (req, res) => {
     res.json(user);
   } catch (error) {
     console.error("❌ Error fetching user profile:", error);
-    res.status(500).json({ message: "Internal server error" });
+    next(error);
   }
 };
 
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { FirstName, LastName, Phone } = updateUserSchema.parse(req.body);
+    const { FirstName, LastName } = updateUserSchema.parse(req.body);
 
     const updatedUser = await prisma.user.update({
       where: { User_id: req.user.id },
-      data: { FirstName, LastName, Phone },
+      data: { FirstName, LastName },
     });
 
     res.json(updatedUser);
   } catch (error) {
+    console.error("❌ Error updating profile:", error);
     next(error);
   }
 };
