@@ -1,4 +1,3 @@
-// routes/room-route.js
 const express = require('express');
 const router = express.Router();
 const roomController = require('../controller/roomController');
@@ -16,5 +15,6 @@ router.put('/rooms/:Room_id', authMiddleware, adminMiddleware, roomController.up
 
 // เส้นทางสำหรับลบห้อง (เฉพาะ Admin)
 router.delete('/rooms/:Room_id', authMiddleware, adminMiddleware, roomController.deleteRoom);
+
 
 module.exports = router;

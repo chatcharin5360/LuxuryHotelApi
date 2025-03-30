@@ -15,6 +15,8 @@ model booking {
   Booking_status booking_Booking_status @default(PENDING)
   User_id        Int
 
+  bookingonroom bookingonroom[] @relation("BookingToBookingOnRoom")
+
   @@index([User_id], map: "Booking_User_id_fkey")
 }
 
@@ -23,6 +25,9 @@ model bookingonroom {
   Booking_id       Int
   Room_id          Int
   Quantity_room    Int
+
+  booking booking @relation(fields: [Booking_id], references: [Booking_id], name: "BookingToBookingOnRoom")
+  room    room    @relation(fields: [Room_id], references: [Room_id])
 
   @@index([Booking_id], map: "BookingOnRoom_Booking_id_fkey")
   @@index([Room_id], map: "BookingOnRoom_Room_id_fkey")
@@ -38,11 +43,12 @@ model payment {
 }
 
 model room {
-  Room_id         Int     @id @default(autoincrement())
+  Room_id         Int             @id @default(autoincrement())
   Room_type       String
   Picture_id      String?
   Description     String?
   Price_per_night Float
+  bookingonroom   bookingonroom[]
 }
 
 model user {
@@ -52,7 +58,7 @@ model user {
   Email     String     @unique(map: "User_Email_key")
   Phone     String?
   Role      user_Role? @default(USER)
-  Password  String     
+  Password  String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 }
